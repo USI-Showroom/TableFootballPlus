@@ -10,24 +10,34 @@
 
 #include <FastLED.h>
 
-#define NUM_LEDS 1
 #define DEBUG
+#define DEFAULT_COLOR CRGB::Green
+
+//LED strip references. Don't change them unless 
+//you actually change or move the strip itself
+#define NUM_LEDS 25  //TODO update with actual values
+#define OFFSET_W 20
+#define OFFSET_Y 7
+#define MAX_SCORE 6
+#define LED_STRIP WS2812
+#define LED_MODE GRB
 
 //Port numbers
-#define BUZZER 0
-#define SENSOR_WHITE 0
-#define SENSOR_YELLOW 0
-#define BTN_SCORE_WHITE_UP 0
-#define BTN_SCORE_WHITE_DOWN 0
-#define BTN_SCORE_YELLOW_UP 0
-#define BTN_SCORE_YELLOW_DOWN 0
-#define BTN_LIGHTS 0
-#define LED_DATA 0
+#define SENSOR_WHITE 2
+#define SENSOR_YELLOW 3
+#define BTN_SCORE_WHITE_UP 4
+#define BTN_SCORE_WHITE_DOWN 5
+#define BTN_SCORE_YELLOW_UP 6
+#define BTN_SCORE_YELLOW_DOWN 7
+#define BTN_LIGHTS 8
+#define LED_DATA 9
+#define BUZZER 10
 
 bool lightsOn = true;
 int scoreWhite = 0;
 int scoreYellow = 0;
 CRGB leds[NUM_LEDS];
+
 
 void setup() {
   #ifdef DEBUG
@@ -44,7 +54,7 @@ void setup() {
   pinMode(BTN_SCORE_YELLOW_DOWN, INPUT);
   pinMode(BTN_LIGHTS, INPUT);
 
-  FastLED.addLeds<WS2813, LED_DATA, RGB>(leds, NUM_LEDS);
+  FastLED.addLeds<LED_STRIP, LED_DATA, LED_MODE>(leds, NUM_LEDS);
 
   //Startup sound
   tone(BUZZER, 450, 400);    //450 MHz for 400 ms
@@ -52,17 +62,17 @@ void setup() {
   tone(BUZZER, 500, 200);
   delay(150);
   tone(BUZZER, 600, 200);
-
-  setDefaultLights();
+  delay(150);
 
   #ifdef DEBUG
     Serial.println(" done.");
   #endif
 }
 
+
 /*
  * Updates values and produces sound/light effects
- * if the white player scores
+ * if the white player scores.
  */
 void scoreEffectWhite() {  
   ++scoreWhite;
@@ -75,16 +85,14 @@ void scoreEffectWhite() {
     Serial.println(scoreYellow);
   #endif
   
-  tone(BUZZER, 450, 400);
-  delay(150);
-  tone(BUZZER, 470, 400);
-
+  playScoreTone();
   delayedLoop(CRGB::White, 500);
 }
 
+
 /*
  * Updates values and produces sound/light effects
- * if the yellow player scores
+ * if the yellow player scores.
  */
 void scoreEffectYellow() {  
   ++scoreYellow;
@@ -97,12 +105,30 @@ void scoreEffectYellow() {
     Serial.println(scoreYellow);
   #endif
   
-  tone(BUZZER, 400, 400);
-  delay(150);
-  tone(BUZZER, 450, 400);
-
+  playScoreTone();
   delayedLoop(CRGB::Yellow, 500);
 }
+
+
+/*
+ * Plays a tone when one of the players scores.
+ */
+void playScoreTone() {
+  #ifdef DEBUG
+    tone(BUZZER, 450, 100);
+    delay(150);
+  #else
+    tone(BUZZER, 450, 200);
+    delay(130);
+    tone(BUZZER, 550, 400);
+    delay(220);
+    tone(BUZZER, 450, 200);
+    delay(130);
+    tone(BUZZER, 550, 800);
+    delay(150);
+  #endif
+}
+
 
 /*
  * Changes the color of the whole strip at once.
@@ -114,48 +140,69 @@ void changeColor(CRGB newColor) {
   FastLED.show();
 }
 
+
 /*
  * Produces a ring effect with the given color and delay,
  * then return to default effect.
  */
 void delayedLoop(CRGB newColor, int interval) {
   leds[0] = newColor;
+  FastLED.show();
   delay(interval);
   for (int i = 1; i < NUM_LEDS; ++i) {
     leds[i] = newColor;
-    leds[i - 1] = CRGB::Black;
+    leds[i - 1] = CRGB::Black;    
+    FastLED.show();
     delay(interval);
   }
   leds[NUM_LEDS - 1] = CRGB::Black;
+  FastLED.show();
   delay(interval);
-  setDefaultLights();
 }
+
 
 /*
- * Sets the default idle effect.
+ * Sets the default idle light effect.
+ * Each short side shows the goal count, while
+ * the long ones have a fixed DEFAULT_COLOR.
  */
 void setDefaultLights() {
-  changeColor(CRGB::Green);
-  //TODO fancier effect
+  if (!lightsOn) {
+    changeColor(CRGB::Black);
+    return;
+  }
+  
+  for (int i = 0; i < NUM_LEDS; ++i) {
+    if (i < OFFSET_Y) {
+      leds[i] = DEFAULT_COLOR;
+    } else if (i <= OFFSET_Y + scoreYellow - 1) {
+      leds[i] = CRGB::Yellow;
+    } else if (i < OFFSET_Y + MAX_SCORE) {
+      leds[i] = CRGB::Black;
+    } else if (i < OFFSET_W) {
+      leds[i] = DEFAULT_COLOR;
+    } else if (i <= OFFSET_W + scoreWhite - 1) {
+      leds[i] = CRGB::White;
+    } else {
+      leds[i] = CRGB::Black;
+    }
+  }
+  FastLED.show();
 }
 
+
 void loop() {
-  
   //Handle light change
   
   if (digitalRead(BTN_LIGHTS) == 1) {
     #ifdef DEBUG
       Serial.println("Toggling lights effects\n");
     #endif
-    //Toggle lights
-    lightsOn = !lightsOn;
+    
+    //lightsOn = !lightsOn; //TODO enable
   }
 
-  if (lightsOn) {
-    setDefaultLights();
-  } else {
-    changeColor(CRGB::Black);
-  }
+  setDefaultLights();
 
   //Handle score change
 
@@ -174,4 +221,6 @@ void loop() {
   if (digitalRead(BTN_SCORE_YELLOW_DOWN) == 1) {
     --scoreYellow;
   }
+
+  delay(200);
 }
