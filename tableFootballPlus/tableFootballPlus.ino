@@ -86,7 +86,7 @@ void scoreEffectWhite() {
   #endif
   
   playScoreTone();
-  delayedLoop(CRGB::White, 500);
+  delayedLoop(CRGB::White, 100);
 }
 
 
@@ -106,7 +106,7 @@ void scoreEffectYellow() {
   #endif
   
   playScoreTone();
-  delayedLoop(CRGB::Yellow, 500);
+  delayedLoop(CRGB::Yellow, 100);
 }
 
 
@@ -146,18 +146,11 @@ void changeColor(CRGB newColor) {
  * then return to default effect.
  */
 void delayedLoop(CRGB newColor, int interval) {
-  leds[0] = newColor;
-  FastLED.show();
-  delay(interval);
-  for (int i = 1; i < NUM_LEDS; ++i) {
-    leds[i] = newColor;
-    leds[i - 1] = CRGB::Black;    
+  for (int i = 0; i < NUM_LEDS; ++i) {
+    leds[i] = newColor;  
     FastLED.show();
     delay(interval);
   }
-  leds[NUM_LEDS - 1] = CRGB::Black;
-  FastLED.show();
-  delay(interval);
 }
 
 
@@ -215,11 +208,15 @@ void loop() {
   }
 
   if (digitalRead(BTN_SCORE_WHITE_DOWN) == 1) {
-    --scoreWhite;
+    if (scoreWhite > 0) {
+      --scoreWhite;
+    }    
   }
 
   if (digitalRead(BTN_SCORE_YELLOW_DOWN) == 1) {
-    --scoreYellow;
+    if (scoreYellow > 0) {
+      --scoreYellow;
+    }    
   }
 
   delay(200);
