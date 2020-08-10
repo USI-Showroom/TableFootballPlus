@@ -23,13 +23,13 @@
 #define LED_MODE GRB
 
 //Port numbers
-#define SENSOR_WHITE 2
-#define SENSOR_YELLOW 3
-#define BTN_SCORE_WHITE_UP 4
-#define BTN_SCORE_WHITE_DOWN 5
-#define BTN_SCORE_YELLOW_UP 6
-#define BTN_SCORE_YELLOW_DOWN 7
-#define BTN_LIGHTS 8
+#define BTN_SCORE_YELLOW_DOWN 2
+#define BTN_SCORE_YELLOW_UP 3
+#define BTN_SCORE_WHITE_DOWN 4
+#define BTN_SCORE_WHITE_UP 5
+#define BTN_LIGHTS 6
+#define SENSOR_WHITE 7
+#define SENSOR_YELLOW 8
 #define LED_DATA 9
 #define BUZZER 10
 
