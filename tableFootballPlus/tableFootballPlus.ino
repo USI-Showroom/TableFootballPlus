@@ -192,18 +192,18 @@ void loop() {
       Serial.println("Toggling lights effects\n");
     #endif
     
-    //lightsOn = !lightsOn; //TODO enable
+    lightsOn = !lightsOn;
   }
 
   setDefaultLights();
 
   //Handle score change
 
-  if (digitalRead(BTN_SCORE_WHITE_UP) == 1 || digitalRead(SENSOR_WHITE) == 1) {
+  if (digitalRead(BTN_SCORE_WHITE_UP) == 1 || digitalRead(SENSOR_YELLOW) == 1) {
     scoreEffectWhite();
   }
 
-  if (digitalRead(BTN_SCORE_YELLOW_UP) == 1 || digitalRead(SENSOR_YELLOW) == 1) {
+  if (digitalRead(BTN_SCORE_YELLOW_UP) == 1 || digitalRead(SENSOR_WHITE) == 1) {
     scoreEffectYellow();
   }
 
