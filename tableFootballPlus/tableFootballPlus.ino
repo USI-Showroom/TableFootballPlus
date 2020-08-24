@@ -167,7 +167,6 @@ void setDefaultLights() {
 
 void loop() {
   //Handle light change
-  
   if (digitalRead(BTN_LIGHTS) == 1) {
     #ifdef DEBUG
       Serial.println("Toggling lights effects");
@@ -179,65 +178,78 @@ void loop() {
   setDefaultLights();
 
   //Handle score change
-
-  if (digitalRead(BTN_SCORE_WHITE_UP) == 1 || digitalRead(SENSOR_YELLOW) == 1) {
-    ++scoreWhite;
-
+  if (scoreWhite == MAX_SCORE) {
     #ifdef DEBUG
-      Serial.println("White scored!");
-      Serial.print("Score: ");
-      Serial.print(scoreWhite);
-      Serial.print("-");
-      Serial.println(scoreYellow);
+      Serial.println("White won!");
     #endif
-    
-    playScoreTone();
     delayedLoop(CRGB::White, 100);
-  }
-
-  if (digitalRead(BTN_SCORE_YELLOW_UP) == 1 || digitalRead(SENSOR_WHITE) == 1) {
-    ++scoreYellow;
-
+  } else if (scoreYellow == MAX_SCORE) {
     #ifdef DEBUG
-      Serial.println("Yellow scored!");
-      Serial.print("Score: ");
-      Serial.print(scoreWhite);
-      Serial.print("-");
-      Serial.println(scoreYellow);
+      Serial.println("Yellow won!");
     #endif
-    
-    playScoreTone();
     delayedLoop(CRGB::Yellow, 100);
-  }
-
-  if (digitalRead(BTN_SCORE_WHITE_DOWN) == 1) {
-    if (scoreWhite > 0) {
-      --scoreWhite;
-      playDownTone();
-
+  } else {
+    //White scored
+    if (digitalRead(BTN_SCORE_WHITE_UP) == 1 || digitalRead(SENSOR_YELLOW) == 1) {
+      ++scoreWhite;
+  
       #ifdef DEBUG
-        Serial.println("Decreasing white score");
+        Serial.println("White scored!");
         Serial.print("Score: ");
         Serial.print(scoreWhite);
         Serial.print("-");
         Serial.println(scoreYellow);
       #endif
-    }    
-  }
+      
+      playScoreTone();
+      delayedLoop(CRGB::White, 100);
+    }
 
-  if (digitalRead(BTN_SCORE_YELLOW_DOWN) == 1) {
-    if (scoreYellow > 0) {
-      --scoreYellow;
-      playDownTone();
-
+    //Yellow scored
+    if (digitalRead(BTN_SCORE_YELLOW_UP) == 1 || digitalRead(SENSOR_WHITE) == 1) {
+      ++scoreYellow;
+  
       #ifdef DEBUG
-        Serial.println("Decreasing yellow score");
+        Serial.println("Yellow scored!");
         Serial.print("Score: ");
         Serial.print(scoreWhite);
         Serial.print("-");
         Serial.println(scoreYellow);
       #endif
-    }    
+      
+      playScoreTone();
+      delayedLoop(CRGB::Yellow, 100);
+    }
+  
+    if (digitalRead(BTN_SCORE_WHITE_DOWN) == 1) {
+      if (scoreWhite > 0) {
+        --scoreWhite;
+        playDownTone();
+  
+        #ifdef DEBUG
+          Serial.println("Decreasing white score");
+          Serial.print("Score: ");
+          Serial.print(scoreWhite);
+          Serial.print("-");
+          Serial.println(scoreYellow);
+        #endif
+      }    
+    }
+  
+    if (digitalRead(BTN_SCORE_YELLOW_DOWN) == 1) {
+      if (scoreYellow > 0) {
+        --scoreYellow;
+        playDownTone();
+  
+        #ifdef DEBUG
+          Serial.println("Decreasing yellow score");
+          Serial.print("Score: ");
+          Serial.print(scoreWhite);
+          Serial.print("-");
+          Serial.println(scoreYellow);
+        #endif
+      }    
+    }
   }
 
   if (digitalRead(BTN_RESET) == 1) {
