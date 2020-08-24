@@ -12,15 +12,15 @@
 #include <avr/wdt.h>
 
 #define DEBUG
-#define DEFAULT_COLOR CRGB::Green
+#define DEFAULT_COLOR CRGB::Blue
+#define MAX_SCORE 10
 
 //LED strip references. Don't change them unless 
 //you actually change or move the strip itself
-#define NUM_LEDS 25  //TODO update with actual values
-#define OFFSET_W 20
-#define OFFSET_Y 7
-#define MAX_SCORE 6
-#define LED_STRIP WS2812
+#define NUM_LEDS 218
+#define OFFSET_Y 87   //Position in the strip where the yellow counter starts
+#define OFFSET_W 195
+#define LED_STRIP WS2813
 #define LED_MODE GRB
 
 //Port numbers
@@ -35,43 +35,9 @@
 #define LED_DATA 10
 #define BUZZER 11
 
-bool lightsOn = true;
 int scoreWhite = 0;
 int scoreYellow = 0;
 CRGB leds[NUM_LEDS];
-
-
-void setup() {
-  #ifdef DEBUG
-    Serial.begin(115200);
-    Serial.print("Starting up...");
-  #endif
-
-  pinMode(BTN_RESET, INPUT);
-  pinMode(BTN_SCORE_YELLOW_DOWN, INPUT);
-  pinMode(BTN_SCORE_YELLOW_UP, INPUT);
-  pinMode(BTN_SCORE_WHITE_DOWN, INPUT);
-  pinMode(BTN_SCORE_WHITE_UP, INPUT);
-  pinMode(BTN_LIGHTS, INPUT);
-  pinMode(SENSOR_WHITE, INPUT);
-  pinMode(SENSOR_YELLOW, INPUT);
-  pinMode(BUZZER, OUTPUT);  
-
-  FastLED.addLeds<LED_STRIP, LED_DATA, LED_MODE>(leds, NUM_LEDS);
-
-  //Startup sound
-  tone(BUZZER, 450, 400);    //450 MHz for 400 ms
-  delay(150);
-  tone(BUZZER, 500, 200);
-  delay(150);
-  tone(BUZZER, 600, 200);
-  delay(150);
-
-  #ifdef DEBUG
-    Serial.println(" done.");
-  #endif
-}
-
 
 /*
  * Plays a tone when one of the players scores.
@@ -123,10 +89,9 @@ void changeColor(CRGB newColor) {
 
 
 /*
- * Produces a ring effect with the given color and delay,
- * then return to default effect.
+ * Produces a ring effect with the given color and optional delay.
  */
-void delayedLoop(CRGB newColor, int interval) {
+void delayedLoop(CRGB newColor, int interval = 0) {
   for (int i = 0; i < NUM_LEDS; ++i) {
     leds[i] = newColor;  
     FastLED.show();
@@ -141,11 +106,6 @@ void delayedLoop(CRGB newColor, int interval) {
  * the long ones have a fixed DEFAULT_COLOR.
  */
 void setDefaultLights() {
-  if (!lightsOn) {
-    changeColor(CRGB::Black);
-    return;
-  }
-  
   for (int i = 0; i < NUM_LEDS; ++i) {
     if (i < OFFSET_Y) {
       leds[i] = DEFAULT_COLOR;
@@ -157,11 +117,47 @@ void setDefaultLights() {
       leds[i] = DEFAULT_COLOR;
     } else if (i <= OFFSET_W + scoreWhite - 1) {
       leds[i] = CRGB::White;
-    } else {
+    } else if (i < OFFSET_W + MAX_SCORE) {
       leds[i] = CRGB::Black;
+    } else {
+      leds[i] = DEFAULT_COLOR;
     }
   }
   FastLED.show();
+}
+
+
+void setup() {
+  delay(2000);
+  #ifdef DEBUG
+    Serial.begin(115200);
+    Serial.print("Starting up...");
+  #endif
+
+  pinMode(BTN_RESET, INPUT);
+  pinMode(BTN_SCORE_YELLOW_DOWN, INPUT);
+  pinMode(BTN_SCORE_YELLOW_UP, INPUT);
+  pinMode(BTN_SCORE_WHITE_DOWN, INPUT);
+  pinMode(BTN_SCORE_WHITE_UP, INPUT);
+  pinMode(BTN_LIGHTS, INPUT);
+  pinMode(SENSOR_WHITE, INPUT);
+  pinMode(SENSOR_YELLOW, INPUT);
+  pinMode(BUZZER, OUTPUT);  
+
+  FastLED.addLeds<LED_STRIP, LED_DATA, LED_MODE>(leds, NUM_LEDS);
+  delayedLoop(CRGB::Green);
+
+  //Startup sound
+  tone(BUZZER, 450, 400);    //450 MHz for 400 ms
+  delay(150);
+  tone(BUZZER, 500, 200);
+  delay(150);
+  tone(BUZZER, 600, 200);
+  delay(150);
+
+  #ifdef DEBUG
+    Serial.println(" done.");
+  #endif
 }
 
 
@@ -171,23 +167,27 @@ void loop() {
     #ifdef DEBUG
       Serial.println("Toggling lights effects");
     #endif
-    
-    lightsOn = !lightsOn;
+
+    //TODO cycle colors
   }
 
   setDefaultLights();
 
-  //Handle score change
+  //Handle victory and score change
   if (scoreWhite == MAX_SCORE) {
     #ifdef DEBUG
       Serial.println("White won!");
     #endif
-    delayedLoop(CRGB::White, 100);
+    delay(1000);
+    changeColor(CRGB::White);
+    delay(1000);
   } else if (scoreYellow == MAX_SCORE) {
     #ifdef DEBUG
       Serial.println("Yellow won!");
     #endif
-    delayedLoop(CRGB::Yellow, 100);
+    delay(1000);
+    changeColor(CRGB::Yellow);
+    delay(1000);
   } else {
     //White scored
     if (digitalRead(BTN_SCORE_WHITE_UP) == 1 || digitalRead(SENSOR_YELLOW) == 1) {
@@ -202,7 +202,7 @@ void loop() {
       #endif
       
       playScoreTone();
-      delayedLoop(CRGB::White, 100);
+      delayedLoop(CRGB::White, 10);
     }
 
     //Yellow scored
@@ -218,7 +218,7 @@ void loop() {
       #endif
       
       playScoreTone();
-      delayedLoop(CRGB::Yellow, 100);
+      delayedLoop(CRGB::Yellow, 10);
     }
   
     if (digitalRead(BTN_SCORE_WHITE_DOWN) == 1) {
