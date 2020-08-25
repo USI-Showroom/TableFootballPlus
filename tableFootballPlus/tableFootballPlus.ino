@@ -12,8 +12,11 @@
 #include <avr/wdt.h>
 
 #define DEBUG
-#define DEFAULT_COLOR CRGB::Blue
 #define MAX_SCORE 10
+#define NUM_COLORS 6
+#define BTN_DELAY 1000
+CRGB colors[NUM_COLORS] = {CRGB::White, CRGB::Green, CRGB::Red, CRGB::Orange, CRGB::Purple, CRGB::Black};
+int currentColor = 0;
 
 //LED strip references. Don't change them unless 
 //you actually change or move the strip itself
@@ -108,19 +111,19 @@ void delayedLoop(CRGB newColor, int interval = 0) {
 void setDefaultLights() {
   for (int i = 0; i < NUM_LEDS; ++i) {
     if (i < OFFSET_Y) {
-      leds[i] = DEFAULT_COLOR;
+      leds[i] = colors[currentColor];
     } else if (i <= OFFSET_Y + scoreYellow - 1) {
       leds[i] = CRGB::Yellow;
     } else if (i < OFFSET_Y + MAX_SCORE) {
       leds[i] = CRGB::Black;
     } else if (i < OFFSET_W) {
-      leds[i] = DEFAULT_COLOR;
+      leds[i] = colors[currentColor];
     } else if (i <= OFFSET_W + scoreWhite - 1) {
       leds[i] = CRGB::White;
     } else if (i < OFFSET_W + MAX_SCORE) {
       leds[i] = CRGB::Black;
     } else {
-      leds[i] = DEFAULT_COLOR;
+      leds[i] = colors[currentColor];
     }
   }
   FastLED.show();
@@ -128,7 +131,6 @@ void setDefaultLights() {
 
 
 void setup() {
-  delay(2000);
   #ifdef DEBUG
     Serial.begin(115200);
     Serial.print("Starting up...");
@@ -146,6 +148,7 @@ void setup() {
 
   FastLED.addLeds<LED_STRIP, LED_DATA, LED_MODE>(leds, NUM_LEDS);
   delayedLoop(CRGB::Green);
+  FastLED.setBrightness(100);
 
   //Startup sound
   tone(BUZZER, 450, 400);    //450 MHz for 400 ms
@@ -168,7 +171,13 @@ void loop() {
       Serial.println("Toggling lights effects");
     #endif
 
-    //TODO cycle colors
+    if (currentColor == NUM_COLORS - 1) {
+      currentColor = 0;
+    } else {
+      ++currentColor;
+    }
+    setDefaultLights();
+    delay(BTN_DELAY);
   }
 
   setDefaultLights();
@@ -202,7 +211,8 @@ void loop() {
       #endif
       
       playScoreTone();
-      delayedLoop(CRGB::White, 10);
+      delayedLoop(CRGB::White);
+      delay(BTN_DELAY);
     }
 
     //Yellow scored
@@ -218,7 +228,8 @@ void loop() {
       #endif
       
       playScoreTone();
-      delayedLoop(CRGB::Yellow, 10);
+      delayedLoop(CRGB::Yellow);
+      delay(BTN_DELAY);
     }
   
     if (digitalRead(BTN_SCORE_WHITE_DOWN) == 1) {
@@ -233,7 +244,8 @@ void loop() {
           Serial.print("-");
           Serial.println(scoreYellow);
         #endif
-      }    
+      }
+      delay(BTN_DELAY);  
     }
   
     if (digitalRead(BTN_SCORE_YELLOW_DOWN) == 1) {
@@ -248,7 +260,8 @@ void loop() {
           Serial.print("-");
           Serial.println(scoreYellow);
         #endif
-      }    
+      }
+      delay(BTN_DELAY);   
     }
   }
 
@@ -261,6 +274,4 @@ void loop() {
     wdt_enable(WDTO_15MS);
     while(1) {}
   }
-
-  delay(200);
 }
