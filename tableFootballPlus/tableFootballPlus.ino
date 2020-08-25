@@ -11,16 +11,19 @@
 #include <FastLED.h>
 #include <avr/wdt.h>
 
-#define DEBUG
+//Uncomment the following line to enable serial output
+//#define DEBUG
 #define MAX_SCORE 10
-#define NUM_COLORS 6
 #define BTN_DELAY 1000
-CRGB colors[NUM_COLORS] = {CRGB::White, CRGB::Green, CRGB::Red, CRGB::Orange, CRGB::Purple, CRGB::Black};
+#define BLINK_DELAY 500
+#define NUM_COLORS 8
+CRGB colors[NUM_COLORS] = {CRGB::Blue, CRGB::Green, CRGB::Red, CRGB::Pink, 
+  CRGB::Orange, CRGB::Purple, CRGB::Aqua, CRGB::Black};
 int currentColor = 0;
 
 //LED strip references. Don't change them unless 
 //you actually change or move the strip itself
-#define NUM_LEDS 218
+#define NUM_LEDS 219
 #define OFFSET_Y 87   //Position in the strip where the yellow counter starts
 #define OFFSET_W 195
 #define LED_STRIP WS2813
@@ -48,7 +51,6 @@ CRGB leds[NUM_LEDS];
 void playScoreTone() {
   #ifdef DEBUG
     tone(BUZZER, 450, 100);
-    delay(150);
   #else
     tone(BUZZER, 450, 200);
     delay(130);
@@ -56,8 +58,7 @@ void playScoreTone() {
     delay(220);
     tone(BUZZER, 450, 200);
     delay(130);
-    tone(BUZZER, 550, 800);
-    delay(150);
+    tone(BUZZER, 550, 600);
   #endif
 }
 
@@ -68,14 +69,12 @@ void playScoreTone() {
 void playDownTone() {
   #ifdef DEBUG
     tone(BUZZER, 350, 100);
-    delay(150);
   #else
     tone(BUZZER, 600, 400);
-    delay(150);
+    delay(130);
     tone(BUZZER, 500, 200);
-    delay(150);
+    delay(130);
     tone(BUZZER, 400, 200);
-    delay(150);
   #endif
 }
 
@@ -147,8 +146,8 @@ void setup() {
   pinMode(BUZZER, OUTPUT);  
 
   FastLED.addLeds<LED_STRIP, LED_DATA, LED_MODE>(leds, NUM_LEDS);
+  FastLED.setBrightness(50);    //TODO remove when we have the right adapter
   delayedLoop(CRGB::Green);
-  FastLED.setBrightness(100);
 
   //Startup sound
   tone(BUZZER, 450, 400);    //450 MHz for 400 ms
@@ -156,7 +155,7 @@ void setup() {
   tone(BUZZER, 500, 200);
   delay(150);
   tone(BUZZER, 600, 200);
-  delay(150);
+  delay(200);
 
   #ifdef DEBUG
     Serial.println(" done.");
@@ -183,86 +182,71 @@ void loop() {
   setDefaultLights();
 
   //Handle victory and score change
-  if (scoreWhite == MAX_SCORE) {
-    #ifdef DEBUG
-      Serial.println("White won!");
-    #endif
-    delay(1000);
-    changeColor(CRGB::White);
-    delay(1000);
-  } else if (scoreYellow == MAX_SCORE) {
-    #ifdef DEBUG
-      Serial.println("Yellow won!");
-    #endif
-    delay(1000);
-    changeColor(CRGB::Yellow);
-    delay(1000);
-  } else {
-    //White scored
-    if (digitalRead(BTN_SCORE_WHITE_UP) == 1 || digitalRead(SENSOR_YELLOW) == 1) {
-      ++scoreWhite;
   
-      #ifdef DEBUG
-        Serial.println("White scored!");
-        Serial.print("Score: ");
-        Serial.print(scoreWhite);
-        Serial.print("-");
-        Serial.println(scoreYellow);
-      #endif
-      
-      playScoreTone();
-      delayedLoop(CRGB::White);
-      delay(BTN_DELAY);
-    }
+  //White scored
+  if (digitalRead(BTN_SCORE_WHITE_UP) == 1 || digitalRead(SENSOR_YELLOW) == 1) {
+    ++scoreWhite;
 
-    //Yellow scored
-    if (digitalRead(BTN_SCORE_YELLOW_UP) == 1 || digitalRead(SENSOR_WHITE) == 1) {
-      ++scoreYellow;
-  
+    #ifdef DEBUG
+      Serial.println("White scored!");
+      Serial.print("Score: ");
+      Serial.print(scoreWhite);
+      Serial.print("-");
+      Serial.println(scoreYellow);
+    #endif      
+
+    delayedLoop(CRGB::White);
+    playScoreTone();     
+    delay(BTN_DELAY);
+  }
+
+  //Yellow scored
+  if (digitalRead(BTN_SCORE_YELLOW_UP) == 1 || digitalRead(SENSOR_WHITE) == 1) {
+    ++scoreYellow;
+
+    #ifdef DEBUG
+      Serial.println("Yellow scored!");
+      Serial.print("Score: ");
+      Serial.print(scoreWhite);
+      Serial.print("-");
+      Serial.println(scoreYellow);
+    #endif
+
+    delayedLoop(CRGB::Yellow);
+    playScoreTone();
+    delay(BTN_DELAY);
+  }
+
+  if (digitalRead(BTN_SCORE_WHITE_DOWN) == 1) {
+    if (scoreWhite > 0) {
+      --scoreWhite;
+      playDownTone();
+
       #ifdef DEBUG
-        Serial.println("Yellow scored!");
+        Serial.println("Decreasing white score");
         Serial.print("Score: ");
         Serial.print(scoreWhite);
         Serial.print("-");
         Serial.println(scoreYellow);
       #endif
-      
-      playScoreTone();
-      delayedLoop(CRGB::Yellow);
-      delay(BTN_DELAY);
     }
-  
-    if (digitalRead(BTN_SCORE_WHITE_DOWN) == 1) {
-      if (scoreWhite > 0) {
-        --scoreWhite;
-        playDownTone();
-  
-        #ifdef DEBUG
-          Serial.println("Decreasing white score");
-          Serial.print("Score: ");
-          Serial.print(scoreWhite);
-          Serial.print("-");
-          Serial.println(scoreYellow);
-        #endif
-      }
-      delay(BTN_DELAY);  
+    delay(BTN_DELAY);  
+  }
+
+  if (digitalRead(BTN_SCORE_YELLOW_DOWN) == 1) {
+    if (scoreYellow > 0) {
+      --scoreYellow;
+      playDownTone();
+
+      #ifdef DEBUG
+        Serial.println("Decreasing yellow score");
+        Serial.print("Score: ");
+        Serial.print(scoreWhite);
+        Serial.print("-");
+        Serial.println(scoreYellow);
+      #endif
     }
-  
-    if (digitalRead(BTN_SCORE_YELLOW_DOWN) == 1) {
-      if (scoreYellow > 0) {
-        --scoreYellow;
-        playDownTone();
-  
-        #ifdef DEBUG
-          Serial.println("Decreasing yellow score");
-          Serial.print("Score: ");
-          Serial.print(scoreWhite);
-          Serial.print("-");
-          Serial.println(scoreYellow);
-        #endif
-      }
-      delay(BTN_DELAY);   
-    }
+    delay(BTN_DELAY);   
   }
 
   if (digitalRead(BTN_RESET) == 1) {
@@ -273,5 +257,21 @@ void loop() {
     //Sounds like a hack but apparently that's the way ¯\_(ツ)_/¯
     wdt_enable(WDTO_15MS);
     while(1) {}
+  }
+
+  if (scoreWhite == MAX_SCORE) {
+    #ifdef DEBUG
+      Serial.println("White won!");
+    #endif
+    delay(BLINK_DELAY);
+    changeColor(CRGB::White);
+    delay(BLINK_DELAY);
+  } else if (scoreYellow == MAX_SCORE) {
+    #ifdef DEBUG
+      Serial.println("Yellow won!");
+    #endif
+    delay(BLINK_DELAY);
+    changeColor(CRGB::Yellow);
+    delay(BLINK_DELAY);
   }
 }
