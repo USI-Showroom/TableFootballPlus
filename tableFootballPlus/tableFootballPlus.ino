@@ -148,6 +148,7 @@ void setup() {
   FastLED.addLeds<LED_STRIP, LED_DATA, LED_MODE>(leds, NUM_LEDS);
   FastLED.setBrightness(50);    //TODO remove when we have the right adapter
   delayedLoop(CRGB::Green);
+  delay(1000);  //Safety delay
 
   //Startup sound
   tone(BUZZER, 450, 400);    //450 MHz for 400 ms
@@ -184,7 +185,8 @@ void loop() {
   //Handle victory and score change
   
   //White scored
-  if (digitalRead(BTN_SCORE_WHITE_UP) == 1 || digitalRead(SENSOR_YELLOW) == 1) {
+  if ((digitalRead(BTN_SCORE_WHITE_UP) == 1 || digitalRead(SENSOR_YELLOW) == 1) 
+      && scoreWhite < MAX_SCORE && scoreYellow < MAX_SCORE) {
     ++scoreWhite;
 
     #ifdef DEBUG
@@ -201,7 +203,8 @@ void loop() {
   }
 
   //Yellow scored
-  if (digitalRead(BTN_SCORE_YELLOW_UP) == 1 || digitalRead(SENSOR_WHITE) == 1) {
+  if ((digitalRead(BTN_SCORE_YELLOW_UP) == 1 || digitalRead(SENSOR_WHITE) == 1) 
+      && scoreWhite < MAX_SCORE && scoreYellow < MAX_SCORE) {
     ++scoreYellow;
 
     #ifdef DEBUG
